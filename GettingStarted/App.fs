@@ -11,7 +11,7 @@ open Db
 
 let html container =
     OK (View.index container)
-
+    >=> Writers.setMimeType "text/html; charset=utf-8"
 
 let overview = warbler (fun _ ->
     Db.getContext() 
@@ -23,8 +23,19 @@ let overview = warbler (fun _ ->
 let browse =
     request (fun r ->
         match r.queryParam "genre" with
-        | Choice1Of2 genre -> html (View.browse genre)
+        | Choice1Of2 genre -> 
+            Db.getContext()
+            |> Db.getAlbumsForGenre genre
+            |> View.browse genre
+            |> html
         | Choice2Of2 msg -> BAD_REQUEST msg)
+
+let details id =
+    match Db.getAlbumDetails id (Db.getContext()) with
+    | Some album ->
+        html (View.details album)
+    | None ->
+        never
 
 let webPart = 
     choose [
@@ -33,8 +44,7 @@ let webPart =
         path home >=> html homeContainer
         path Store.overview >=> overview
         path Store.browse >=> browse
-        pathScan Store.details (fun id -> html (details id))
+        pathScan Store.details details
     ]
-
 
 startWebServer defaultConfig webPart

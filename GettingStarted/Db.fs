@@ -43,5 +43,3 @@ let getAlbumDetails id (ctx : DbContext) : AlbumDetails option =
     } |> firstOrNone
 
 let getContext() = Sql.GetDataContext()
-
-//getGenres (getContext())
